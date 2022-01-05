@@ -107,6 +107,7 @@ def main():
         "--taxi-records",
         required=False,
         type=int,
+        default=TaxiBenchmark._records,
         help="Override default number of records for Taxi benchmark.",
     )
     parser.add_argument(
@@ -114,6 +115,7 @@ def main():
         "--census-records",
         required=False,
         type=int,
+        default=CensusBenchmark._records,
         help="Override default number of records for Census benchmark.",
     )
     parser.add_argument(
@@ -121,6 +123,7 @@ def main():
         "--training-set-records",
         required=False,
         type=int,
+        default=PlasticcBenchmark._training_set_records,
         help="Override default number of records to generate for training set in Plasticc benchmark.",
     )
     parser.add_argument(
@@ -128,6 +131,7 @@ def main():
         "--test-set-records",
         required=False,
         type=int,
+        default=PlasticcBenchmark._test_set_records,
         help="Override default number of records to generate for test set in Plasticc benchmark.",
     )
     parser.add_argument(
@@ -135,6 +139,7 @@ def main():
         "--training-set-metadata-records",
         required=False,
         type=int,
+        default=PlasticcBenchmark._training_set_metadata_records,
         help="Override default number of records to generate for training set metadata in Plasticc benchmark.",
     )
     parser.add_argument(
@@ -142,6 +147,7 @@ def main():
         "--test-set-metadata-records",
         required=False,
         type=int,
+        default=PlasticcBenchmark._test_set_metadata_records,
         help="Override default number of records to generate for test set metadata in Plasticc benchmark.",
     )
     parser.add_argument(
