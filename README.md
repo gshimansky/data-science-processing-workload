@@ -3,7 +3,7 @@ benchmark. It required modin, so the easiest way to install it is to create
 modin conda environment, like this:
 
 ```
-conda create -n modin -c conda-forge modin-all
+conda create -n modin -c conda-forge modin-all scikit-learn-intelex xgboost
 conda activate modin
 ```
 
