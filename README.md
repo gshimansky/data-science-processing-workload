@@ -1,3 +1,29 @@
+Installation on Linux
+---------------------
+Run script `install-conda.sh`. It will install miniconda and create an environment
+named `data-science-processing-workload`. This environment contains all required packages.
+
+Installation on Windows
+-----------------------
+First make it possible to run scripts under the current user with the following
+PowerShell command:
+```
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted
+```
+After that it should be possible to execute PowerShell script `install-conda.ps1`. When running
+in command prompt you can execute it like this:
+```
+powershell .\install-conda.ps1
+```
+It will install miniconda and create an environment named `data-science-processing-workload`.
+This environment contains all required packages. This script also registers Python
+that miniconda install as the default Python interpreter in the system. If this is not
+desired, please remove switch `/RegisterPython=0` and `/AddToPath=1` from miniconda
+command line in `install-conda.ps1`.
+
+Description
+-----------
+
 This is a data science processing workload for a proposed SPEC Workstation
 benchmark. It required modin, so the easiest way to install it is to create
 modin conda environment, like this:
@@ -11,8 +37,8 @@ To run it use launcher script. Currently, three benchmarks are included into
 workload: taxi, census and plasticc. Use `python launcher.py -h` for command
 line switches help.
 
-Examples:
----------
+Examples
+--------
 ```
 python launcher.py -m taxi
 ```
