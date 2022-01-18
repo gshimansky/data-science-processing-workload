@@ -21,6 +21,11 @@ that miniconda install as the default Python interpreter in the system. If this 
 desired, please remove switch `/RegisterPython=0` and `/AddToPath=1` from miniconda
 command line in `install-conda.ps1`.
 
+If you want to run benchmarks on Linux installed in Windows Subsystem for Linux (WSL)
+on Windows, make sure that you use WSL generation 2 (WSL2). In this case Linux runs
+as a separate VM that has its own IP address and Ray running in WSL2 doesn't fail to
+connect to its workers.
+
 Description
 -----------
 
