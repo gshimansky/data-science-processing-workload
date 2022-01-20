@@ -91,14 +91,13 @@ def main():
         "taxi": TaxiBenchmark,
         "census": CensusBenchmark,
         "plasticc": PlasticcBenchmark,
-        "all": None,
     }
 
     parser = argparse.ArgumentParser(description="Generate dataset for a benchmark.")
     parser.add_argument(
         "-m",
         "--mode",
-        choices=benchmarks.keys(),
+        choices=list(benchmarks.keys()) + ["all"],
         required=True,
         help="Benchmark to run.",
     )
