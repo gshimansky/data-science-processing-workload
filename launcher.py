@@ -88,9 +88,9 @@ class PlasticcBenchmark(Benchmark):
 
 def main():
     benchmarks = {
-        "taxi": [TaxiBenchmark],
-        "census": [CensusBenchmark],
-        "plasticc": [PlasticcBenchmark],
+        "taxi": TaxiBenchmark,
+        "census": CensusBenchmark,
+        "plasticc": PlasticcBenchmark,
         "all": None,
     }
 
@@ -159,7 +159,7 @@ def main():
     )
 
     args = parser.parse_args()
-    modes = benchmarks[args.mode] if args.mode != "all" else benchmarks.values()
+    modes = [benchmarks[args.mode]] if args.mode != "all" else benchmarks.values()
 
     for benchmark_class in modes:
         kwargs = vars(args)
