@@ -15,9 +15,10 @@ class Benchmark(abc.ABC):
         pass
 
     @staticmethod
-    def print_result(result: OrderedDict):
+    def print_result(result: OrderedDict, total_time):
         for k, v in result.items():
             print(f"{k}: {v}")
+        print("Total benchmark execution time:", total_time)
 
 
 class TaxiBenchmark(Benchmark):
@@ -34,8 +35,10 @@ class TaxiBenchmark(Benchmark):
             gen = TaxiGenerator(self._datafile)
             gen.generate(self._records)
         print("Running Taxi benchmark")
+        t0 = time.time()
         res = taxi_run(self._datafile)
-        self.print_result(res)
+        t1 = time.time()
+        self.print_result(res, t1 - t0)
 
 
 class CensusBenchmark(Benchmark):
@@ -52,8 +55,10 @@ class CensusBenchmark(Benchmark):
             gen = CensusGenerator(self._datafile)
             gen.generate(self._records)
         print("Running Census benchmark")
+        t0 = time.time()
         res = census_run(self._datafile)
-        self.print_result(res)
+        t1 = time.time()
+        self.print_result(res, t1 - t0)
 
 
 class PlasticcBenchmark(Benchmark):
@@ -83,8 +88,10 @@ class PlasticcBenchmark(Benchmark):
                 )
             )
         print("Running Plasticc benchmark")
+        t0 = time.time()
         res = plasticc_run(*output_files)
-        self.print_result(res)
+        t1 = time.time()
+        self.print_result(res, t1 - t0)
 
 
 def main():
@@ -164,10 +171,7 @@ def main():
     for benchmark_class in modes:
         kwargs = vars(args)
         benchmark = benchmark_class(args.reuse_dataset_files, **kwargs)
-        t0 = time.time()
         benchmark.run()
-        t1 = time.time()
-        print("Total execution time:", t1 - t0)
 
 
 if __name__ == "__main__":
