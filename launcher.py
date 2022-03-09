@@ -1,5 +1,6 @@
 import argparse
 import abc
+import time
 from collections import OrderedDict
 
 from generator.generator import TaxiGenerator, CensusGenerator, PlasticcGenerator
@@ -163,7 +164,10 @@ def main():
     for benchmark_class in modes:
         kwargs = vars(args)
         benchmark = benchmark_class(args.reuse_dataset_files, **kwargs)
+        t0 = time.time()
         benchmark.run()
+        t1 = time.time()
+        print("Total execution time:", t1 - t0)
 
 
 if __name__ == "__main__":
