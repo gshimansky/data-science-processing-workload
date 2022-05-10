@@ -25,14 +25,15 @@ class TaxiBenchmark(Benchmark):
     _datafile = "taxi.csv"
     _records = 20_000_000
 
-    def __init__(self, reuse: bool, **kwargs):
+    def __init__(self, reuse: bool, parallel: bool, **kwargs):
         self._reuse = reuse
+        self._parallel = parallel
         self._records = kwargs.pop("taxi_records", self._records)
 
     def run(self, **kwargs):
         if not self._reuse:
             print("Generating Taxi data file", self._datafile)
-            gen = TaxiGenerator(self._datafile)
+            gen = TaxiGenerator(self._datafile, self._parallel)
             gen.generate(self._records)
         print("Running Taxi benchmark")
         t0 = time.time()
@@ -45,14 +46,15 @@ class CensusBenchmark(Benchmark):
     _datafile = "census.csv"
     _records = 21721923
 
-    def __init__(self, reuse: bool, **kwargs):
+    def __init__(self, reuse: bool, parallel: bool, **kwargs):
         self._reuse = reuse
+        self._parallel = parallel
         self._records = kwargs.pop("census_records", self._records)
 
     def run(self, **kwargs):
         if not self._reuse:
             print("Generating Census data file", self._datafile)
-            gen = CensusGenerator(self._datafile)
+            gen = CensusGenerator(self._datafile, self._parallel)
             gen.generate(self._records)
         print("Running Census benchmark")
         t0 = time.time()
@@ -68,8 +70,9 @@ class PlasticcBenchmark(Benchmark):
     _training_set_metadata_records = 7848
     _test_set_metadata_records = 3492890
 
-    def __init__(self, reuse: bool, **kwargs):
+    def __init__(self, reuse: bool, parallel: bool, **kwargs):
         self._reuse = reuse
+        self._parallel = parallel
         self._training_set_records = kwargs.pop("training_set_records", self._training_set_records)
         self._test_set_records = kwargs.pop("test_set_records", self._test_set_records)
         self._training_set_metadata_records = kwargs.pop("training_set_metadata_records", self._training_set_metadata_records)
@@ -78,7 +81,7 @@ class PlasticcBenchmark(Benchmark):
     def run(self):
         if not self._reuse:
             print("Generating Plasticc data files with prefix", self._datafile_prefix)
-            gen = PlasticcGenerator(self._datafile_prefix)
+            gen = PlasticcGenerator(self._datafile_prefix, self._parallel)
             output_files = list(
                 gen.generate(
                     self._training_set_records,
@@ -164,13 +167,20 @@ def main():
         default=False,
         help="Skip dataset generation phase and reuse datasets generated on previous runs."
     )
+    parser.add_argument(
+        "-np",
+        "--no-parallel",
+        required=False,
+        default=False,
+        help="Disable parallel dataset generation."
+    )
 
     args = parser.parse_args()
     modes = [benchmarks[args.mode]] if args.mode != "all" else benchmarks.values()
 
     for benchmark_class in modes:
         kwargs = vars(args)
-        benchmark = benchmark_class(args.reuse_dataset_files, **kwargs)
+        benchmark = benchmark_class(args.reuse_dataset_files, not args.no_parallel, **kwargs)
         benchmark.run()
 
 
