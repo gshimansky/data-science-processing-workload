@@ -149,7 +149,8 @@ def main():
             f"USAGE: python taxi.py <data file name>"
         )
         return
-    run(sys.argv[1])
+    result = run(sys.argv[1])
+    print(result)
 
 
 if __name__ == "__main__":

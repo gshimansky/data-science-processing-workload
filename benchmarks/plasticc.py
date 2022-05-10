@@ -277,7 +277,8 @@ def main():
             f"USAGE: python plasticc.py <training set file name> <test set file name> <training set metadata file name> <test set metadata file name>"
         )
         return
-    run(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    result = run(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    print(result)
 
 
 if __name__ == "__main__":
