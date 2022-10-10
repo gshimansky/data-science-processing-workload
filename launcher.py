@@ -30,10 +30,9 @@ class TaxiBenchmark(Benchmark):
         self._records = kwargs.pop("taxi_records", self._records)
 
     def run(self, **kwargs):
-        if not self._reuse:
-            print("Generating Taxi data file", self._datafile)
-            gen = TaxiGenerator(self._datafile)
-            gen.generate(self._records)
+        print(f'{"Reusing" if self._reuse else "Generating"} Taxi data file {self._datafile}')
+        gen = TaxiGenerator(self._datafile, self._reuse)
+        gen.generate(self._records)
         print("Running Taxi benchmark")
         t0 = time.time()
         res = taxi_run(self._datafile)
@@ -50,10 +49,9 @@ class CensusBenchmark(Benchmark):
         self._records = kwargs.pop("census_records", self._records)
 
     def run(self, **kwargs):
-        if not self._reuse:
-            print("Generating Census data file", self._datafile)
-            gen = CensusGenerator(self._datafile)
-            gen.generate(self._records)
+        print(f'{"Reusing" if self._reuse else "Generating"} Census data file {self._datafile}')
+        gen = CensusGenerator(self._datafile, self._reuse)
+        gen.generate(self._records)
         print("Running Census benchmark")
         t0 = time.time()
         res = census_run(self._datafile)
@@ -76,17 +74,16 @@ class PlasticcBenchmark(Benchmark):
         self._test_set_metadata_records = kwargs.pop("test_set_metadata_records", self._test_set_metadata_records)
 
     def run(self):
-        if not self._reuse:
-            print("Generating Plasticc data files with prefix", self._datafile_prefix)
-            gen = PlasticcGenerator(self._datafile_prefix)
-            output_files = list(
-                gen.generate(
-                    self._training_set_records,
-                    self._test_set_records,
-                    self._training_set_metadata_records,
-                    self._test_set_metadata_records,
-                )
+        print(f'{"Reusing" if self._reuse else "Generating"} Plasticc data files with prefix {self._datafile_prefix}')
+        gen = PlasticcGenerator(self._datafile_prefix, self._reuse)
+        output_files = list(
+            gen.generate(
+                self._training_set_records,
+                self._test_set_records,
+                self._training_set_metadata_records,
+                self._test_set_metadata_records,
             )
+        )
         print("Running Plasticc benchmark")
         t0 = time.time()
         res = plasticc_run(*output_files)

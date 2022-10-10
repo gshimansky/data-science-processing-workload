@@ -26,8 +26,9 @@ seed = 42
 
 
 class DatasetGenerator(abc.ABC):
-    def __init__(self, output_file_name: str):
+    def __init__(self, output_file_name: str, reuse: bool):
         self._output_file_name = output_file_name
+        self._reuse = reuse
 
     @abc.abstractmethod
     def generate_check_args(self, **kwargs):
@@ -172,7 +173,9 @@ class TaxiGenerator(DatasetGenerator):
         self.generate(records)
 
     def generate(self, records: int):
-        self._generate_data(self._fields, self._output_file_name, records)
+        if not self._reuse:
+            self._generate_data(self._fields, self._output_file_name, records)
+        return self._output_file_name
 
 
 class CensusGenerator(DatasetGenerator):
@@ -233,7 +236,9 @@ class CensusGenerator(DatasetGenerator):
         self.generate(records)
 
     def generate(self, records: int):
-        self._generate_data(self._fields, self._output_file_name, records)
+        if not self._reuse:
+            self._generate_data(self._fields, self._output_file_name, records)
+        return self._output_file_name
 
 
 class PlasticcGenerator(DatasetGenerator):
@@ -316,29 +321,30 @@ class PlasticcGenerator(DatasetGenerator):
         test_set_metadata_records: int,
     ):
         training_set_file = self._output_file_name + "_training_set.csv"
-        self._generate_data(
-            self._training_set_fields,
-            training_set_file,
-            training_set_records,
-        )
         test_set_file = self._output_file_name + "_test_set.csv"
-        self._generate_data(
-            self._test_set_fields,
-            test_set_file,
-            test_set_records,
-        )
         training_set_metadata_file = self._output_file_name + "_training_set_metadata.csv"
-        self._generate_data(
-            self._training_set_metadata_fields,
-            training_set_metadata_file,
-            training_set_metadata_records,
-        )
         test_set_metadata_file = self._output_file_name + "_test_set_metadata.csv"
-        self._generate_data(
-            self._test_set_metadata_fields,
-            test_set_metadata_file,
-            test_set_metadata_records,
-        )
+        if not self._reuse:
+            self._generate_data(
+                self._training_set_fields,
+                training_set_file,
+                training_set_records,
+            )
+            self._generate_data(
+                self._test_set_fields,
+                test_set_file,
+                test_set_records,
+            )
+            self._generate_data(
+                self._training_set_metadata_fields,
+                training_set_metadata_file,
+                training_set_metadata_records,
+            )
+            self._generate_data(
+                self._test_set_metadata_fields,
+                test_set_metadata_file,
+                test_set_metadata_records,
+            )
         return training_set_file, test_set_file, training_set_metadata_file, test_set_metadata_file
 
 
