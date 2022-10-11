@@ -96,7 +96,7 @@ def split_step(train_final, test_final):
     classes = sorted(y.unique())
 
     class_weights = {c: 1 for c in classes}
-    class_weights.update({c: 2 for c in [8, 15]})
+    class_weights.update({c: 2 for c in [64, 15]})
 
     lbl = LabelEncoder()
     y = lbl.fit_transform(y)
