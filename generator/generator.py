@@ -88,7 +88,7 @@ class DatasetGenerator(abc.ABC):
         if self._parallel:
             import ray
             if not ray.is_initialized():
-                ray.init()
+                ray.init(runtime_env={'env_vars': {'__MODIN_AUTOIMPORT_PANDAS__': '1'}})
 
             @ray.remote
             def remote_map(f, obj):
