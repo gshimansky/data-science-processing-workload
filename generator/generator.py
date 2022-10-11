@@ -14,10 +14,6 @@
 import argparse
 import abc
 
-import ray
-if not ray.is_initialized():
-    ray.init()
-
 import numpy as np
 import modin.pandas as pd
 from numpy.random import default_rng, SeedSequence
@@ -26,9 +22,10 @@ seed = 42
 
 
 class DatasetGenerator(abc.ABC):
-    def __init__(self, output_file_name: str, reuse: bool):
+    def __init__(self, output_file_name: str, reuse: bool, parallel: bool):
         self._output_file_name = output_file_name
         self._reuse = reuse
+        self._parallel = parallel
 
     @abc.abstractmethod
     def generate_check_args(self, **kwargs):
@@ -75,8 +72,7 @@ class DatasetGenerator(abc.ABC):
             cls._generators[type_name](rnd, records, series_params), name=name
         )
 
-    @classmethod
-    def _generate_data(cls, fields: dict, output_file_name: str, records_number: int):
+    def _generate_data(self, fields: dict, output_file_name: str, records_number: int):
         generators = SeedSequence(seed).spawn(len(fields))
         map_args = [
             (
@@ -89,13 +85,23 @@ class DatasetGenerator(abc.ABC):
             for i, column in enumerate(fields.items())
         ]
 
-        @ray.remote
-        def remote_map(f, obj):
-            return f(obj)
+        if self._parallel:
+            import ray
+            if not ray.is_initialized():
+                ray.init()
 
-        data = dict(
-            ray.get([remote_map.remote(cls._generate_series, x) for x in map_args])
-        )
+            @ray.remote
+            def remote_map(f, obj):
+                return f(obj)
+
+            data = dict(
+                ray.get([remote_map.remote(self._generate_series, x) for x in map_args])
+            )
+        else:
+            data = {}
+            for arg in map_args:
+                key, value = self._generate_series(list(arg))
+                data[key] = value
 
         print("Writing output to", output_file_name)
         pd.DataFrame(data).to_csv(output_file_name, index=False)
@@ -404,8 +410,15 @@ def main():
         required=True,
         help="File name to write dataset or prefix (in case of plasticc)",
     )
+    parser.add_argument(
+        "-np",
+        "--no-parallel",
+        required=False,
+        default=False,
+        help="Disable parallel dataset generation."
+    )
     args = parser.parse_args()
-    gen = generators[args.mode](args.output)
+    gen = generators[args.mode](args.output, not args.no_parallel)
     kwargs = vars(args)
     gen.generate_check_args(**kwargs)
 
