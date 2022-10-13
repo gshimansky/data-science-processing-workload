@@ -66,7 +66,7 @@ class CensusBenchmark(Benchmark):
 class PlasticcBenchmark(Benchmark):
     _datafile_prefix = "plasticc"
     _training_set_records = 1421705
-    _test_set_records = 453653103
+    _test_set_records = 4536531
     _training_set_metadata_records = 7848
     _test_set_metadata_records = 3492890
 
