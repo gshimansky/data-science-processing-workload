@@ -276,7 +276,7 @@ class PlasticcGenerator(DatasetGenerator):
         "hostgal_photoz_err": ("float32", 0.0, 1.7347999811172485),
         "distmod": ("float32", 31.9960994720459, 47.02560043334961),
         "mwebv": ("float32", 0.003000000026077032, 2.746999979019165),
-        "target": ("int32", 6, 95),
+        "target": ("categorical", 6, 15, 16, 42, 52, 53, 62, 64, 65, 67, 88, 90, 92, 95),
     }
     _test_set_metadata_fields = {
         "object_id": ("int32", 13, 130788054),
