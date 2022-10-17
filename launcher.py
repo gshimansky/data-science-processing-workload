@@ -65,10 +65,10 @@ class CensusBenchmark(Benchmark):
 
 class PlasticcBenchmark(Benchmark):
     _datafile_prefix = "plasticc"
-    _training_set_records = 1421705
-    _test_set_records = 4536531
+    _training_set_records = 1_421_705
+    _test_set_records = 45_365_310
     _training_set_metadata_records = 7848
-    _test_set_metadata_records = 3492890
+    _test_set_metadata_records = 349_289
 
     def __init__(self, reuse: bool, parallel: bool, **kwargs):
         self._reuse = reuse

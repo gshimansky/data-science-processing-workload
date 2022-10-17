@@ -72,7 +72,7 @@ class DatasetGenerator(abc.ABC):
             cls._generators[type_name](rnd, records, series_params), name=name
         )
 
-    def _generate_data(self, fields: dict, output_file_name: str, records_number: int):
+    def _generate_data(self, fields: dict, records_number: int):
         generators = SeedSequence(seed).spawn(len(fields))
         map_args = [
             (
@@ -87,8 +87,9 @@ class DatasetGenerator(abc.ABC):
 
         if self._parallel:
             import ray
+
             if not ray.is_initialized():
-                ray.init(runtime_env={'env_vars': {'__MODIN_AUTOIMPORT_PANDAS__': '1'}})
+                ray.init(runtime_env={"env_vars": {"__MODIN_AUTOIMPORT_PANDAS__": "1"}})
 
             @ray.remote
             def remote_map(f, obj):
@@ -103,8 +104,35 @@ class DatasetGenerator(abc.ABC):
                 key, value = self._generate_series(list(arg))
                 data[key] = value
 
+        return data
+
+    def _generate_and_write_data(
+        self, fields: dict, output_file_name: str, records_number: int
+    ):
+        data = self._generate_data(fields, records_number)
         print("Writing output to", output_file_name)
         pd.DataFrame(data).to_csv(output_file_name, index=False)
+
+    @staticmethod
+    def _split_range_into_random_parts(range_max, num_parts, min_size, max_size):
+        parts = []
+        rnd = default_rng(SeedSequence(seed))
+        current = 0
+        for p in range(num_parts):
+            remaining = range_max - current
+            avg_remaining_size = round(remaining / (num_parts - p))
+            delta = round((max_size + min_size) / 2) - avg_remaining_size
+            low = min_size
+            high = max_size
+            if delta > 0:
+                high = max(high - delta, low)
+            else:
+                low = min(low - delta, high)
+            size = rnd.integers(low, high, endpoint=True)
+            parts.append(size)
+            current += size
+
+        return parts
 
 
 class TaxiGenerator(DatasetGenerator):
@@ -180,7 +208,7 @@ class TaxiGenerator(DatasetGenerator):
 
     def generate(self, records: int):
         if not self._reuse:
-            self._generate_data(self._fields, self._output_file_name, records)
+            self._generate_and_write_data(self._fields, self._output_file_name, records)
         return self._output_file_name
 
 
@@ -243,13 +271,12 @@ class CensusGenerator(DatasetGenerator):
 
     def generate(self, records: int):
         if not self._reuse:
-            self._generate_data(self._fields, self._output_file_name, records)
+            self._generate_and_write_data(self._fields, self._output_file_name, records)
         return self._output_file_name
 
 
 class PlasticcGenerator(DatasetGenerator):
     _training_set_fields = {
-        "object_id": ("int32", 615, 130779836),
         "mjd": ("float32", 59580.03515625, 60674.36328125),
         "passband": ("int32", 0, 5),
         "flux": ("float32", -1149388.375, 2432808.75),
@@ -257,7 +284,6 @@ class PlasticcGenerator(DatasetGenerator):
         "detected": ("int32", 0, 1),
     }
     _test_set_fields = {
-        "object_id": ("int32", 13, 130788054),
         "mjd": ("float32", 59580.03515625, 60674.36328125),
         "passband": ("int32", 0, 5),
         "flux": ("float32", -8935484.0, 13675792.0),
@@ -276,7 +302,23 @@ class PlasticcGenerator(DatasetGenerator):
         "hostgal_photoz_err": ("float32", 0.0, 1.7347999811172485),
         "distmod": ("float32", 31.9960994720459, 47.02560043334961),
         "mwebv": ("float32", 0.003000000026077032, 2.746999979019165),
-        "target": ("categorical", 6, 15, 16, 42, 52, 53, 62, 64, 65, 67, 88, 90, 92, 95),
+        "target": (
+            "categorical",
+            6,
+            15,
+            16,
+            42,
+            52,
+            53,
+            62,
+            64,
+            65,
+            67,
+            88,
+            90,
+            92,
+            95,
+        ),
     }
     _test_set_metadata_fields = {
         "object_id": ("int32", 13, 130788054),
@@ -291,6 +333,10 @@ class PlasticcGenerator(DatasetGenerator):
         "distmod": ("float32", 27.64620018005371, 47.026100158691406),
         "mwebv": ("float32", 0.0020000000949949026, 2.99399995803833),
     }
+    _training_set_object_ids = (615, 130779836)
+    _training_set_objects_numbers = (47, 352)
+    _test_set_object_ids = (13, 130788054)
+    _test_set_objects_numbers = (45, 352)
 
     def generate_check_args(self, **kwargs):
         training_set_records = kwargs.pop("training_set_records", None)
@@ -328,30 +374,62 @@ class PlasticcGenerator(DatasetGenerator):
     ):
         training_set_file = self._output_file_name + "_training_set.csv"
         test_set_file = self._output_file_name + "_test_set.csv"
-        training_set_metadata_file = self._output_file_name + "_training_set_metadata.csv"
+        training_set_metadata_file = (
+            self._output_file_name + "_training_set_metadata.csv"
+        )
         test_set_metadata_file = self._output_file_name + "_test_set_metadata.csv"
         if not self._reuse:
-            self._generate_data(
-                self._training_set_fields,
-                training_set_file,
+
+            def generate_dataset(
+                data_records,
+                metadata_records,
+                object_numbers,
+                data_output,
+                metadata_output,
+                data_fields,
+                metadata_fields,
+            ):
+                metadata = pd.DataFrame(
+                    self._generate_data(metadata_fields, metadata_records)
+                )
+                numbers = self._split_range_into_random_parts(
+                    data_records, metadata_records, object_numbers[0], object_numbers[1]
+                )
+                data_records = sum(numbers)
+                data = pd.DataFrame(self._generate_data(data_fields, data_records))
+                ids = np.concatenate([np.repeat(np.array([x]), n) for (x, n) in zip(metadata["object_id"], numbers)])
+                data.insert(0, column="object_id", value=ids)
+
+                print("Writing output to", data_output)
+                data.to_csv(data_output)
+                print("Writing output to", metadata_output)
+                metadata.to_csv(metadata_output)
+
+            generate_dataset(
                 training_set_records,
-            )
-            self._generate_data(
-                self._test_set_fields,
-                test_set_file,
-                test_set_records,
-            )
-            self._generate_data(
-                self._training_set_metadata_fields,
-                training_set_metadata_file,
                 training_set_metadata_records,
+                self._training_set_objects_numbers,
+                training_set_file,
+                training_set_metadata_file,
+                self._training_set_fields,
+                self._training_set_metadata_fields,
             )
-            self._generate_data(
-                self._test_set_metadata_fields,
-                test_set_metadata_file,
+            generate_dataset(
+                test_set_records,
                 test_set_metadata_records,
+                self._test_set_objects_numbers,
+                test_set_file,
+                test_set_metadata_file,
+                self._test_set_fields,
+                self._test_set_metadata_fields,
             )
-        return training_set_file, test_set_file, training_set_metadata_file, test_set_metadata_file
+
+        return (
+            training_set_file,
+            test_set_file,
+            training_set_metadata_file,
+            test_set_metadata_file,
+        )
 
 
 def main():
@@ -415,7 +493,7 @@ def main():
         "--no-parallel",
         required=False,
         default=False,
-        help="Disable parallel dataset generation."
+        help="Disable parallel dataset generation.",
     )
     args = parser.parse_args()
     gen = generators[args.mode](args.output, not args.no_parallel)
