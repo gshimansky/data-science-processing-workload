@@ -22,10 +22,11 @@ seed = 42
 
 
 class DatasetGenerator(abc.ABC):
-    def __init__(self, output_file_name: str, reuse: bool, parallel: bool):
+    def __init__(self, output_file_name: str, reuse: bool, parallel: bool, num_cpus: int):
         self._output_file_name = output_file_name
         self._reuse = reuse
         self._parallel = parallel
+        self._num_cpus = num_cpus
 
     @abc.abstractmethod
     def generate_check_args(self, **kwargs):
@@ -89,7 +90,12 @@ class DatasetGenerator(abc.ABC):
             import ray
 
             if not ray.is_initialized():
-                ray.init(runtime_env={"env_vars": {"__MODIN_AUTOIMPORT_PANDAS__": "1"}})
+                ray_ver = [int(x) for x in ray.__version__.split(".")]
+                if ray_ver[0] < 1 or ray_ver[0] == 1 and ray_ver[1] <= 6:
+                    # Workaround for ray-1.6.0 problem with runtime_env parameter
+                    ray.init(num_cpus=self._num_cpus)
+                else:
+                    ray.init(num_cpus=self._num_cpus, runtime_env={"env_vars": {"__MODIN_AUTOIMPORT_PANDAS__": "1"}})
 
             @ray.remote
             def remote_map(f, obj):
