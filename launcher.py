@@ -1,8 +1,12 @@
 import argparse
 import abc
-import os
 import time
 from collections import OrderedDict
+
+import os
+# Need to set it early before importing generator classes because they import Modin
+# and this variable has to be set already in case modin experimental API is needed later.
+os.environ["MODIN_EXPERIMENTAL"] = "true"
 
 from generator.generator import TaxiGenerator, CensusGenerator, PlasticcGenerator
 from benchmarks.taxi import run as taxi_run
@@ -183,7 +187,14 @@ def main():
         "--cpus",
         required=False,
         type=int,
-        help="Specify maximum number of CPU cores to use"
+        help="Specify maximum number of CPU cores to use."
+    )
+    parser.add_argument(
+        "--hdk",
+        action='store_true',
+        required=False,
+        default=False,
+        help="Use experimental HDK engine to execute benchmarks."
     )
 
     args = parser.parse_args()
@@ -194,6 +205,10 @@ def main():
         print("Using", args.cpus, "number of CPU cores")
     else:
         print("Using maximum available number of CPU cores")
+
+    if args.hdk:
+        os.environ["MODIN_STORAGE_FORMAT"] = "hdk"
+        os.environ["MODIN_ENGINE"] = "native"
 
     for benchmark_class in modes:
         kwargs = vars(args)
