@@ -13,6 +13,7 @@
 
 import sys
 import time
+import json
 from collections import OrderedDict
 import modin.pandas as pd
 
@@ -264,7 +265,7 @@ def main():
         )
         return
     result = run(sys.argv[1])
-    print(result)
+    json.dump(result, sys.stdout, indent=4)
 
 
 if __name__ == "__main__":

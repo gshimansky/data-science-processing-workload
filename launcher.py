@@ -1,5 +1,7 @@
 import argparse
 import abc
+import sys
+import json
 import time
 from collections import OrderedDict
 
@@ -24,12 +26,6 @@ class Benchmark(abc.ABC):
     def run(self, **kwargs):
         pass
 
-    @staticmethod
-    def print_result(result: OrderedDict, total_time):
-        for k, v in result.items():
-            print(f"{k}: {v}")
-        print("Total benchmark execution time:", total_time)
-
 
 class TaxiBenchmark(Benchmark):
     _datafile = "taxi.csv"
@@ -39,7 +35,7 @@ class TaxiBenchmark(Benchmark):
         super().__init__(reuse, parallel, num_cpus)
         self._records = kwargs.pop("taxi_records", self._records)
 
-    def run(self, **kwargs):
+    def run(self, **kwargs) -> tuple[OrderedDict, float]:
         print(f'{"Reusing" if self._reuse else "Generating"} Taxi data file {self._datafile}')
         gen = TaxiGenerator(self._datafile, self._reuse, self._parallel, self._num_cpus)
         gen.generate(self._records)
@@ -48,7 +44,7 @@ class TaxiBenchmark(Benchmark):
         t0 = time.time()
         res = taxi_run(self._datafile)
         t1 = time.time()
-        self.print_result(res, t1 - t0)
+        return res, t1 - t0
 
 
 class CensusBenchmark(Benchmark):
@@ -59,7 +55,7 @@ class CensusBenchmark(Benchmark):
         super().__init__(reuse, parallel, num_cpus)
         self._records = kwargs.pop("census_records", self._records)
 
-    def run(self, **kwargs):
+    def run(self, **kwargs) -> tuple[OrderedDict, float]:
         print(f'{"Reusing" if self._reuse else "Generating"} Census data file {self._datafile}')
         gen = CensusGenerator(self._datafile, self._reuse, self._parallel, self._num_cpus)
         gen.generate(self._records)
@@ -68,7 +64,7 @@ class CensusBenchmark(Benchmark):
         t0 = time.time()
         res = census_run(self._datafile)
         t1 = time.time()
-        self.print_result(res, t1 - t0)
+        return res, t1 - t0
 
 
 class PlasticcBenchmark(Benchmark):
@@ -85,7 +81,7 @@ class PlasticcBenchmark(Benchmark):
         self._training_set_metadata_records = kwargs.pop("training_set_metadata_records", self._training_set_metadata_records)
         self._test_set_metadata_records = kwargs.pop("test_set_metadata_records", self._test_set_metadata_records)
 
-    def run(self):
+    def run(self) -> tuple[OrderedDict, float]:
         print(f'{"Reusing" if self._reuse else "Generating"} Plasticc data files with prefix {self._datafile_prefix}')
         gen = PlasticcGenerator(self._datafile_prefix, self._reuse, self._parallel, self._num_cpus)
         output_files = list(
@@ -101,7 +97,7 @@ class PlasticcBenchmark(Benchmark):
         t0 = time.time()
         res = plasticc_run(*output_files)
         t1 = time.time()
-        self.print_result(res, t1 - t0)
+        return res, t1 - t0
 
 
 def main():
@@ -196,9 +192,24 @@ def main():
         default=False,
         help="Use experimental HDK engine to execute benchmarks."
     )
+    parser.add_argument(
+        "-j",
+        "--json",
+        action='store_true',
+        required=False,
+        default=False,
+        help="Output result in JSON format."
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        required=False,
+        type=str,
+        help="Output file to write JSON data to. By default stdout is used."
+    )
 
     args = parser.parse_args()
-    modes = [benchmarks[args.mode]] if args.mode != "all" else benchmarks.values()
+    modes = [args.mode] if args.mode != "all" else benchmarks.keys()
 
     if args.cpus is not None:
         os.environ["MODIN_CPUS"] = str(args.cpus)
@@ -210,10 +221,26 @@ def main():
         os.environ["MODIN_STORAGE_FORMAT"] = "hdk"
         os.environ["MODIN_ENGINE"] = "native"
 
-    for benchmark_class in modes:
+    benchmark_results = OrderedDict()
+    for benchmark_name in modes:
+        benchmark_class = benchmarks[benchmark_name]
         kwargs = vars(args)
         benchmark = benchmark_class(args.reuse_dataset_files, not args.no_parallel, args.cpus, **kwargs)
-        benchmark.run()
+        results, total_time = benchmark.run()
+        results["Total"] = total_time
+        results.move_to_end("Total", last=False)
+        benchmark_results[benchmark_name] = results
+
+    with open(args.output, "w") if args.output is not None else sys.stdout as fp:
+        if args.json:
+            json.dump(benchmark_results, fp, indent=4)
+            fp.write("\n")
+        else:
+            for name, results in benchmark_results.items():
+                total_time = results.pop("Total")
+                for k, v in results.items():
+                    print(f"{k}: {v}", file=fp)
+                print(f"Total {name} benchmark execution time: {total_time}", file=fp)
 
 
 if __name__ == "__main__":
