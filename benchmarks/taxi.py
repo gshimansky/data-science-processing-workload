@@ -25,7 +25,7 @@ def read(filename):
         "pickup_datetime": "timestamp",
         "dropoff_datetime": "timestamp",
         "store_and_fwd_flag": "string",
-        "rate_code_id": "int64",
+        "rate_code_id": "float64",
         "pickup_longitude": "float64",
         "pickup_latitude": "float64",
         "dropoff_longitude": "float64",
@@ -46,10 +46,10 @@ def read(filename):
         "dropoff": "string",
         "cab_type": "string",
         "precipitation": "float64",
-        "snow_depth": "int64",
+        "snow_depth": "float64",
         "snowfall": "float64",
-        "max_temperature": "int64",
-        "min_temperature": "int64",
+        "max_temperature": "float64",
+        "min_temperature": "float64",
         "average_wind_speed": "float64",
         "pickup_nyct2010_gid": "float64",
         "pickup_ctlabel": "float64",
@@ -82,12 +82,7 @@ def read(filename):
         col for (col, valtype) in column_types.items() if valtype in ["timestamp"]
     ]
 
-    df = pd.read_csv(
-        filename,
-        header=0,
-        dtype=all_but_dates,
-        parse_dates=dates_only,
-    )
+    df = pd.read_csv(filename, header=0, dtype=all_but_dates, parse_dates=dates_only)
 
     df.shape  # to trigger real execution on omnisci
     return df
@@ -127,6 +122,24 @@ def q4_omnisci(df):
     return q4_pandas_output
 
 
+def warmup_hdk():
+    df = pd.DataFrame({"a": [1, 2]})
+    df = df[df.a < 2]
+    _ = df.shape
+
+
+def import_to_hdk(df):
+    from modin.experimental.core.execution.native.implementations.hdk_on_native.db_worker import (
+        DbWorker,
+    )
+
+    df._query_compiler._modin_frame._partitions[0][
+        0
+    ].frame_id = DbWorker().import_arrow_table(
+        df._query_compiler._modin_frame._partitions[0][0].get()
+    )
+
+
 def measure(func, *args, **kw):
     t0 = time.time()
     res = func(*args, **kw)
@@ -137,6 +150,8 @@ def measure(func, *args, **kw):
 def run(input_file):
     res = OrderedDict()
     df, res["Reading"] = measure(read, input_file)
+    _, res["HDK warm-up"] = measure(warmup_hdk)
+    _, res["HDK data import"] = measure(import_to_hdk, df)
     _, res["Q1"] = measure(q1_omnisci, df)
     _, res["Q2"] = measure(q2_omnisci, df)
     _, res["Q3"] = measure(q3_omnisci, df.copy())
@@ -146,9 +161,7 @@ def run(input_file):
 
 def main():
     if len(sys.argv) != 2:
-        print(
-            f"USAGE: python taxi.py <data file name>"
-        )
+        print(f"USAGE: python taxi.py <data file name>")
         return
     result = run(sys.argv[1])
     json.dump(result, sys.stdout, indent=4)
