@@ -29,8 +29,7 @@ connect to its workers.
 Description
 -----------
 
-This is a data science processing workload for a proposed SPEC Workstation
-benchmark. It required modin, so the easiest way to install it is to create
+This benchmark required modin, so the easiest way to install it is to create
 modin conda environment, like this:
 
 ```
