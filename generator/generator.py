@@ -407,9 +407,9 @@ class PlasticcGenerator(DatasetGenerator):
                 data.insert(0, column="object_id", value=ids)
 
                 print("Writing output to", data_output)
-                data.to_csv(data_output)
+                data.to_csv(data_output, index=False)
                 print("Writing output to", metadata_output)
-                metadata.to_csv(metadata_output)
+                metadata.to_csv(metadata_output, index=False)
 
             generate_dataset(
                 training_set_records,
