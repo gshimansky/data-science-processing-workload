@@ -146,17 +146,12 @@ def read(
     dtypes,
     meta_dtypes,
 ):
-    train = pd.read_csv(training_set_filename, dtype=dtypes)
-    test = pd.read_csv(
-        test_set_filename,
-        names=list(dtypes.keys()),
-        dtype=dtypes,
-        header=0,
-    )
+    train = pd.read_csv(training_set_filename, dtype=dtypes, header=0)
+    test = pd.read_csv(test_set_filename, dtype=dtypes, header=0)
 
-    train_meta = pd.read_csv(training_set_metadata_filename, dtype=meta_dtypes)
+    train_meta = pd.read_csv(training_set_metadata_filename, dtype=meta_dtypes, header=0)
     target = meta_dtypes.pop("target")
-    test_meta = pd.read_csv(test_set_metadata_filename, dtype=meta_dtypes)
+    test_meta = pd.read_csv(test_set_metadata_filename, dtype=meta_dtypes, header=0)
     meta_dtypes["target"] = target
 
     dfs = (train, train_meta, test, test_meta)
