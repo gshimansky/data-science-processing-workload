@@ -69,6 +69,14 @@ def trigger_read_op(dfs: tuple):
     return dfs
 
 
+def hdk_warmap_query():
+    # Trigger HDK initialization by executing a quick trivial
+    # query. It is necessary for correct time measurement of ETL part.
+    df = pd.DataFrame({"a": [1, 2, 3]})
+    df = df + 1
+    df.shape
+
+
 def ravel_column_names(cols):
     d0 = cols.get_level_values(0)
     d1 = cols.get_level_values(1)
@@ -247,6 +255,8 @@ def run(
     training_set_file, test_set_file, training_set_metadata_file, test_set_metadata_file
 ):
     dtypes, meta_dtypes = create_dtypes()
+
+    hdk_warmap_query()
 
     res = OrderedDict()
     (train, train_meta, test, test_meta), res["Reading"] = measure(

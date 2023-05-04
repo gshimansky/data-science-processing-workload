@@ -236,6 +236,14 @@ def ml(X, y, random_state, n_runs, test_size):
     return ml_scores
 
 
+def hdk_warmap_query():
+    # Trigger HDK initialization by executing a quick trivial
+    # query. It is necessary for correct time measurement of ETL part.
+    df = pd.DataFrame({"a": [1, 2, 3]})
+    df = df + 1
+    df.shape
+
+
 def measure(func, *args, **kw):
     t0 = time.time()
     res = func(*args, **kw)
@@ -244,6 +252,8 @@ def measure(func, *args, **kw):
 
 
 def run(input_file):
+    hdk_warmap_query()
+
     res = OrderedDict()
     df, res["Reading"] = measure(read, input_file)
     (_, X, y), res["ETL"] = measure(etl, df)
