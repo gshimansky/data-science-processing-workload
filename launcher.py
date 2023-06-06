@@ -15,6 +15,8 @@ from benchmarks.taxi import run as taxi_run
 from benchmarks.census import run as census_run
 from benchmarks.plasticc import run as plasticc_run
 
+import unidist
+unidist.init()
 
 class Benchmark(abc.ABC):
     def __init__(self, reuse: bool, parallel: bool, num_cpus: int):
