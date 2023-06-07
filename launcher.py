@@ -10,6 +10,11 @@ import os
 # and this variable has to be set already in case modin experimental API is needed later.
 os.environ["MODIN_EXPERIMENTAL"] = "true"
 
+print("ENV --------------------------------------------------------------{")
+for k,v in os.environ.items():
+    print(f"{k}={v}")
+print("ENV --------------------------------------------------------------}")
+
 from generator.generator import TaxiGenerator, CensusGenerator, PlasticcGenerator
 from benchmarks.taxi import run as taxi_run
 from benchmarks.census import run as census_run
