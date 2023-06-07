@@ -13,6 +13,8 @@ os.environ["MODIN_EXPERIMENTAL"] = "true"
 print("ENV --------------------------------------------------------------{")
 for k,v in os.environ.items():
     print(f"{k}={v}")
+import socket
+print("Host name = ", socket.gethostname())
 print("ENV --------------------------------------------------------------}")
 
 from generator.generator import TaxiGenerator, CensusGenerator, PlasticcGenerator
