@@ -216,7 +216,6 @@ def ml(train_final, test_final):
         "objective": "multi:softprob",
         "eval_metric": "merror",
         "tree_method": "hist",
-        "nthread": 16,
         "num_class": 14,
         "max_depth": 7,
         "verbosity": 1,
