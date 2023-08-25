@@ -61,6 +61,11 @@ class DatasetGenerator(abc.ABC):
     def _generate_categoricals(rnd, records: int, series_params: tuple):
         return rnd.choice(series_params, size=records)
 
+    @staticmethod
+    def _generate_object(rnd, records: int, series_params: tuple):
+        return np.nan
+
+
     _generators = {
         "int64": _generate_int.__func__,
         "int32": _generate_int.__func__,
@@ -68,6 +73,7 @@ class DatasetGenerator(abc.ABC):
         "float32": _generate_float.__func__,
         "datetime64[ns]": _generate_datetime.__func__,
         "categorical": _generate_categoricals.__func__,
+        "object": _generate_object.__func__,
     }
 
     @classmethod
@@ -148,7 +154,7 @@ class DatasetGenerator(abc.ABC):
 class TaxiGenerator(DatasetGenerator):
     _fields = {
         "trip_id": ("int64", 1, 1464785771),
-        #        "vendor_id": ("object", nan, nan),
+        "vendor_id": ("object", 0, 0),
         "pickup_datetime": (
             "datetime64[ns]",
             np.datetime64("2013-01-01 00:00:00"),
@@ -159,7 +165,7 @@ class TaxiGenerator(DatasetGenerator):
             np.datetime64("2013-01-01 00:00:00"),
             np.datetime64("2015-12-31 23:59:59"),
         ),
-        #        "store_and_fwd_flag": ("object", nan, nan),
+        "store_and_fwd_flag": ("object", 0, 0),
         "rate_code_id": ("int64", 0, 252),
         "pickup_longitude": ("float64", -3509.015037, 3570.224107),
         "pickup_latitude": ("float64", -3579.139413, 3577.13555),
@@ -172,13 +178,13 @@ class TaxiGenerator(DatasetGenerator):
         "mta_tax": ("float64", -49.5, 250.0),
         "tip_amount": ("float64", -440.0, 3950588.8),
         "tolls_amount": ("float64", -99.99, 7999.92),
-        #        "ehail_fee": ("float64", nan, nan),
+        "ehail_fee": ("float64", 0, 0),
         "improvement_surcharge": ("float64", -0.3, 137.63),
         "total_amount": ("float64", -1430.0, 3950611.6),
-        #        "payment_type": ("object", nan, nan),
+        "payment_type": ("object", 0, 0),
         "trip_type": ("float64", 1.0, 2.0),
-        #        "pickup": ("object", nan, nan),
-        #        "dropoff": ("object", nan, nan),
+        "pickup": ("object", 0, 0),
+        "dropoff": ("object", 0, 0),
         "cab_type": ("categorical", "green", "yellow"),
         "precipitation": ("float64", 0.0, 5.81),
         "snow_depth": ("int64", 0, 23),
@@ -189,22 +195,22 @@ class TaxiGenerator(DatasetGenerator):
         "pickup_nyct2010_gid": ("float64", 1.0, 2167.0),
         "pickup_ctlabel": ("float64", 1.0, 9901.0),
         "pickup_borocode": ("float64", 1.0, 5.0),
-        #        "pickup_boroname": ("object", nan, nan),
+        "pickup_boroname": ("object", 0, 0),
         "pickup_ct2010": ("float64", 100.0, 990100.0),
         "pickup_boroct2010": ("float64", 1000100.0, 5990100.0),
-        #        "pickup_cdeligibil": ("object", nan, nan),
-        #        "pickup_ntacode": ("object", nan, nan),
-        #        "pickup_ntaname": ("object", nan, nan),
+        "pickup_cdeligibil": ("object", 0, 0),
+        "pickup_ntacode": ("object", 0, 0),
+        "pickup_ntaname": ("object", 0, 0),
         "pickup_puma": ("float64", 3701.0, 4114.0),
         "dropoff_nyct2010_gid": ("float64", 1.0, 2167.0),
         "dropoff_ctlabel": ("float64", 1.0, 9901.0),
         "dropoff_borocode": ("float64", 1.0, 5.0),
-        #        "dropoff_boroname": ("object", nan, nan),
+        "dropoff_boroname": ("object", 0, 0),
         "dropoff_ct2010": ("float64", 100.0, 990100.0),
         "dropoff_boroct2010": ("float64", 1000100.0, 5990100.0),
-        #        "dropoff_cdeligibil": ("object", nan, nan),
-        #        "dropoff_ntacode": ("object", nan, nan),
-        #        "dropoff_ntaname": ("object", nan, nan),
+        "dropoff_cdeligibil": ("object", 0, 0),
+        "dropoff_ntacode": ("object", 0, 0),
+        "dropoff_ntaname": ("object", 0, 0),
         "dropoff_puma": ("float64", 3701.0, 4114.0),
     }
 
