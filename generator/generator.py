@@ -14,8 +14,12 @@
 import argparse
 import abc
 
+import os
 import numpy as np
-import modin.pandas as pd
+try:
+    import modin.pandas as pd
+except ImportError:
+    import pandas as pd
 from numpy.random import default_rng, SeedSequence
 
 seed = 42
@@ -497,12 +501,11 @@ def main():
     parser.add_argument(
         "-np",
         "--no-parallel",
-        required=False,
-        default=False,
+        action='store_true',
         help="Disable parallel dataset generation.",
     )
     args = parser.parse_args()
-    gen = generators[args.mode](args.output, not args.no_parallel)
+    gen = generators[args.mode](args.output, False, not args.no_parallel, os.cpu_count())
     kwargs = vars(args)
     gen.generate_check_args(**kwargs)
 
